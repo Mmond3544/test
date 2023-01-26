@@ -1,0 +1,61 @@
+<html>
+<head>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.2.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.4.2.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.4.2.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@holoviz/panel@0.13.0/dist/panel.min.js"></script>
+    <script type="text/javascript">
+      Bokeh.set_log_level("info");
+    </script>
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+        <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+<py-env>
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - scipy
+  - panel==0.13.1a2
+</py-env>
+</head>
+<body>
+
+<py-script>
+  import pandas as pd
+  from sklearn.feature_extraction.text import CountVectorizer
+  from sklearn.metrics.pairwise import cosine_similarity
+
+  org_movies = pd.read_csv('movie.csv')
+  org_movies.head(3)
+
+  movies = org_movies[['index', 'Title','URL', 'Year','IMDb Rating', 'Genres']]
+
+  movies.fillna('')
+
+  movies['features'] = movies['index'].astype(str) +' '+ movies['Title'] +' '+ movies['URL'].apply(str) +' '+ movies['Year'].apply(str) +' '+ movies['IMDb Rating'].apply(str)+' '+ movies['Genres']
+  movies.iloc[0]['features']
+
+  cv = CountVectorizer()
+  count_matrix = cv.fit_transform(movies['features'])
+  cs = cosine_similarity(count_matrix)
+
+  def get_movie_name_from_index(index):
+      return org_movies[org_movies['index']==index]['Title'].values[0]
+  def get_index_from_movie_name(name):
+      return org_movies[org_movies['Title']==name]['index'].values[0]
+
+  test_movie_name = input('Enter Movie name --> ')
+  test_movie_index = get_index_from_movie_name(test_movie_name)
+  movie_corrs = cs[test_movie_index]
+  movie_corrs = enumerate(movie_corrs)
+  sorted_similar_movies = sorted(movie_corrs,key=lambda x:x[1],reverse=True)
+  for i in range(20):
+      print(get_movie_name_from_index(sorted_similar_movies[i][0]))
+</py-script>
+</body>
+</html>
